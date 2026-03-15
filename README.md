@@ -4,9 +4,7 @@
 
 **Prebuilt wheels** (2026-03-15): see the *prebuilt* directory.
 
-These instructions are for building Torch 2.10, TorchVision 0.25 and TorchAudio 2.10 for Python 3.13 and ROCm 7.2.0 in Debian 13 (trixie) specifically for the *gfx101x* (RDNA 1) arch. RDNA 2 & 3 will probably work out of the box from the [official wheel](https://pytorch.org/get-started/locally).
-
-The following are the commands for building PyTorch, TorchVision and TorchAudio from the `Main` branch of the [PyTorch git repository](https://github.com/pytorch/pytorch) to make it work with Radeon RX 5600/5700 (gfx1010) on Debian 13 (trixie).
+These instructions are for building Torch 2.10, TorchVision 0.25 and TorchAudio 2.10 for Python 3.13 and ROCm 7.2.0 in Debian 13 (trixie) specifically for the *gfx101x* (RDNA 1) arch (e.g. Radeon RX 5600/5700). RDNA 2 & 3 will probably work out of the box from the [official wheel](https://pytorch.org/get-started/locally).
 
 Requirements
 --
