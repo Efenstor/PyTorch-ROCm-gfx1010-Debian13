@@ -15,14 +15,14 @@ Requirements
     python3
     git
 
-ROCm
+ROCm 7.2.0
 --
 
-**IMPORTANT**: The version of ROCm included with Debian 13 is both incomplete and outdated. You have to install ROCm from the AMD's official Linux repositories.
+**IMPORTANT**: The version of ROCm included with Debian 13 is both incomplete and outdated. You have to install ROCm 7.2.0 from the AMD's official Linux repositories.
 
 The easiest way is to download and install *amdgpu-install* as described [here](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/quick-start.html). Then execute `apt install rocm` as root. **Do not** install the AMDGPU driver, the one included with Debian is totally enough. Another way is to [do it manually](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/detailed-install.html).
 
-Download and unpack the missing RocBLAS libraries into */opt/rocm/lib/rocblas/library*:
+Download and unpack the missing RocBLAS libraries into */opt/rocm/lib/rocblas/library* (as root):
 
 ```
 wget https://github.com/Efenstor/PyTorch-ROCm-gfx1010-Debian13/raw/refs/heads/main/files/rocblas_library_gfx1010.tar.gz
