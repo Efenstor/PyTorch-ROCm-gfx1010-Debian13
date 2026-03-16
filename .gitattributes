@@ -1,3 +1,4 @@
 prebuilt/torchaudio-2.10.0+27b7ebd-cp313-cp313-linux_x86_64.whl filter=lfs diff=lfs merge=lfs -text
 prebuilt/torchvision-0.25.0+8ac84ee-cp313-cp313-linux_x86_64.whl filter=lfs diff=lfs merge=lfs -text
 prebuilt/torch-2.10.0a0+git911aa98-cp313-cp313-linux_x86_64.whl filter=lfs diff=lfs merge=lfs -text
+files/rocblas_library_gfx1010.tar.gz filter=lfs diff=lfs merge=lfs -text
