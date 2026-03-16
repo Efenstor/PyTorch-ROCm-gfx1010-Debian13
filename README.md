@@ -4,18 +4,18 @@
 
 **Prebuilt wheels** (2026-03-15): see the *prebuilt* directory.
 
-These instructions are for building Torch 2.10, TorchVision 0.25 and TorchAudio 2.10 for Python 3.13 and ROCm 7.2.0 in Debian 13 (trixie) specifically for the *gfx101x* (RDNA 1) arch (e.g. Radeon RX 5600/5700). RDNA 2 & 3 will probably work out of the box from the [official wheel](https://pytorch.org/get-started/locally).
+These instructions are for building Torch 2.10, TorchVision 0.25 and TorchAudio 2.10 for Python 3.13 and ROCm 7.2 in Debian 13 (trixie) specifically for the *gfx101x* (RDNA 1) arch (e.g. Radeon RX 5600/5700). RDNA 2 & 3 will probably work out of the box from the [official wheel](https://pytorch.org/get-started/locally).
 
 Requirements
 --
-    ROCm 7.2.0 (see the section below)
+    ROCm 7.2 (see the section below)
     build-essential
     clang
     cmake
     python3
     git
 
-ROCm 7.2.0
+ROCm 7.2
 --
 
 **IMPORTANT**: The version of ROCm included with Debian 13 is both incomplete and outdated. You have to install ROCm 7.2.0 from the AMD's official Linux repositories.
@@ -29,7 +29,14 @@ wget https://github.com/Efenstor/PyTorch-ROCm-gfx1010-Debian13/raw/refs/heads/ma
 tar xv -f rocblas_library_gfx1010.tar.gz -C /opt/rocm/lib/rocblas/library
 ```
 
-Then install all the rest of the requirements using the usual `apt install`.
+**IMPORTANT**: After any upgrade of ROCm you will likely lose those additional libraries so keep them at hand in case you'll have to add them again. Theoretically you can disable upgrading ROCm completely by using the `apt-mark hold rocm` command. Anyway I recommend to stick to the 7.2 branch of ROCm, so make sure that in /etc/apt/sources.list.d/rocm.list you have the version 7.2 specified directly like this:
+
+```
+deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/7.2 noble main
+deb [arch=amd64,i386 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/graphics/7.2/ubuntu noble main
+```
+
+After that install all the rest of the requirements using the usual `apt install`.
 
 Torch
 --
