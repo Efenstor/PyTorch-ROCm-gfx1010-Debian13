@@ -6,8 +6,20 @@
 
 These instructions are for building Torch 2.10, TorchVision 0.25 and TorchAudio 2.10 for Python 3.13 and ROCm 7.2 in Debian 13 (trixie) specifically for the *gfx101x* (RDNA 1) arch (e.g. Radeon RX 5600/5700). RDNA 2 & 3 will probably work out of the box from the [official wheel](https://pytorch.org/get-started/locally).
 
+Note about kernel panics
+--
+
+I still cannot find a definitive cause of the occasional kernel panics that happen when using PyTorch. For example, in ComfyUI those always occur during switching nodes (e.g. switching from *Sampler* to *VAE decode*, from *Model Load* to *Conditioning*, etc.). It's obvious that it is a sort of "memory overflow" condition, I tried a lot of solutions found online but none of them actually worked in the long-run tests.
+
+Currently I am testing the following kernel parameter solution:
+
+    amd_iommu=off amdgpu.cwsr_enable=0 amdgpu.gttsize=8192
+    
+Add it to the *GRUB_CMDLINE_LINUX_DEFAULT* line in `/etc/default/grub`, execute update-grub and reboot.
+
 Requirements
 --
+
     ROCm 7.2 (see the section below)
     build-essential
     clang
@@ -91,9 +103,11 @@ ONNX
 
 No build for ROCm 7.2.0 + Python 3.12 is available officially from AMD (see [here](https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/)) and I didn't try yet to compile it from the sources.
 
-For now you may try the official wheel but it will unlikely utilize the GPU:
+For now you may try the official wheel:
 
     pip install -U onnxruntime
+    
+I cannot prove definitely that it utilizes the GPU but judging by the GPU load graph and the noises my graphics card makes it does, probably that's because I have *migraphx* installed, which goes together with ROCm 7.2. 
 
 Triton
 --
