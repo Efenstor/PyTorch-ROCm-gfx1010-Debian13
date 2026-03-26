@@ -9,11 +9,11 @@ These instructions are for building Torch 2.10, TorchVision 0.25 and TorchAudio 
 Note about kernel panics
 --
 
-I still cannot find a definitive cause of the occasional kernel panics that happen when using PyTorch. For example, in ComfyUI those always occur during switching nodes (e.g. switching from *Sampler* to *VAE decode*, from *Model Load* to *Conditioning*, etc.). It's obvious that it is a sort of "memory overflow" condition, I tried a lot of solutions found online but none of them actually worked in the long-run tests.
+If you experience occasional kernel panics when using PyTorch (for example, in ComfyUI those may occur during switching nodes), first of all try to increase the **reserved VRAM limit**. For example, I had to increase it to the absurd value of 10 GB for the kernel panics to disappear, and amazingly enough it didn't affect performance at all.
 
-Currently I am testing the following kernel parameter solution:
+Also try adding the following parameters to the kernel mode line:
 
-    amd_iommu=off amdgpu.cwsr_enable=0 amdgpu.gttsize=8192
+    amd_iommu=off amdgpu.cwsr_enable=0 amdgpu.gttsize=8192 ttm.pages_limit=32768000 ttm.page_pool_size=32768000 amdttm.pages_limit=32768000 amdttm.page_pool_size=32768000
     
 Add it to the *GRUB_CMDLINE_LINUX_DEFAULT* line in `/etc/default/grub`, execute update-grub and reboot.
 
