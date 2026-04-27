@@ -8,7 +8,7 @@
 
 # The defaults should be almost crash-safe
 # (use anything for True or nothing for False)
-reserve_vram=10.0    # safe value = 10.0
+reserve_vram=12.0    # safe value = 12.0
 gc_threshold=0.6    # default = 0.6
 max_split_size=256  # default = 256
 preview_method=auto

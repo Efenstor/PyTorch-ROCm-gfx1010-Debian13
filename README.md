@@ -11,6 +11,8 @@ Note about kernel panics
 
 If you experience occasional kernel panics when using PyTorch (for example, in ComfyUI those may occur during switching nodes), first of all try to increase the **reserved VRAM limit**. For example, I had to increase it to the absurd value of 10 GB for the kernel panics to disappear, and amazingly enough it didn't affect performance at all.
 
+It also seems that more recent kernels from the backports (6.17 and later) are causing occasional freezes with PyTorch no matter the reserved VRAM limit, so I recommend to stick with the stable 6.12 kernels. 
+
 Also try adding the following parameters to the kernel mode line:
 
     amd_iommu=off amdgpu.cwsr_enable=0 amdgpu.gttsize=8192 ttm.pages_limit=32768000 ttm.page_pool_size=32768000 amdttm.pages_limit=32768000 amdttm.page_pool_size=32768000
