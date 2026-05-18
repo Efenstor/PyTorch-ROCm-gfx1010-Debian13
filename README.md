@@ -11,7 +11,7 @@ Note about kernel panics
 
 If you experience occasional kernel panics when using PyTorch (for example, in ComfyUI those may occur during switching nodes), first of all try to increase the **reserved VRAM limit**. For example, I had to increase it to the absurd value of 10 GB for the kernel panics to disappear, and amazingly enough it didn't affect performance at all.
 
-It also seems that more recent kernels from the backports (6.17 and later) are causing occasional freezes with PyTorch no matter the reserved VRAM limit, so I recommend to stick with the stable 6.12 kernels. 
+**IMPORTANT**: It seems that more recent kernels from the backports (6.17 and later) are causing occasional freezes with PyTorch no matter the reserved VRAM limit, so I highly recommend to stick to the stable 6.12 kernels.
 
 Also try adding the following parameters to the kernel mode line:
 
@@ -34,7 +34,7 @@ ROCm 7.2
 
 **IMPORTANT**: The version of ROCm included with Debian 13 is both incomplete and outdated. You have to install ROCm 7.2.0 from the AMD's official Linux repositories.
 
-The easiest way is to download and install *amdgpu-install* as described [here](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/quick-start.html). Then execute `apt install rocm` as root. **Do not** install the AMDGPU driver, the one included with Debian is totally enough. Another way is to [do it manually](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/detailed-install.html).
+The easiest way is to download and install *amdgpu-install* as described [here](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/quick-start.html), then execute `apt install rocm` as root. **Do not** install the AMDGPU driver, the one included with Debian is totally enough. Also instead of *amdgpu-install* you can [add the AMD repos manually](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/detailed-install.html).
 
 Download and unpack the missing RocBLAS libraries into */opt/rocm/lib/rocblas/library* (as root):
 
@@ -103,7 +103,7 @@ No building required, version 0.49.2 supports ROCm 7.2.0 out of the box:
 ONNX
 --
 
-No build for ROCm 7.2.0 + Python 3.12 is available officially from AMD (see [here](https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/)) and I didn't try yet to compile it from the sources.
+No build for ROCm 7.2.0 + Python 3.13 is available officially from AMD (see [here](https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/)) and I didn't try yet to compile it from the sources.
 
 For now you may try the official wheel:
 
