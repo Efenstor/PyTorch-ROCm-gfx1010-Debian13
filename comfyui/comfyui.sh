@@ -26,6 +26,7 @@ custom=
 caffeinate=
 firejail=
 fj_net_none=
+fj_whitelist=
 
 get_current_profile() {
   echo $(cat "$1" | sed -n "s/ *\([0-9]*\).*\*.*/\1/p")
@@ -42,6 +43,7 @@ uninitialize() {
   fi
   rm -f "$launcher"
   rm -f "$fjprofile"
+  rm -rf "$script_dir"/ComfyUI/temp
 }
 
 catchbreak() {
@@ -54,7 +56,7 @@ script_dir="$(realpath $(dirname $0))"
 cd "$script_dir"
 
 # Parse the named parameters
-optstr="?hildafgr:t:s:p:q:voc:jn"
+optstr="?hildafgr:t:s:p:q:voc:jnw:"
 while getopts $optstr opt
 do
   case "$opt" in
@@ -75,6 +77,7 @@ do
     c) custom="$OPTARG" ;;
     j) firejail=1 ;;
     n) fj_net_none=1 ;;
+    w) fj_whitelist="$OPTARG" ;;
     :) echo "Missing argument for -$OPTARG" >&2
        exit 1 ;;
   esac
@@ -108,7 +111,8 @@ if [ "$help" ]; then
   echo "-o: switch the amdgpu profile to COMPUTE, see NOTE 1 below (default=$profile_compute)"
   echo "-c: custom parameters to be added to the ComfyUI command line"
   echo "-j: run ComfyUI in firejail"
-  echo "-n: restrict network when running in firejail"
+  echo "-n: restrict network in firejail"
+  echo "-w: whitelist a directory in firejail"
   echo "
 NOTE 1: For this option to work the profile file must be user-writable.
   You can acheive this by making a startup script with the following command:
@@ -177,6 +181,9 @@ if [ $firejail ]; then
     private-tmp
     ignore private-dev
   " > "$fjprofile"
+  if [ "$fj_whitelist" ]; then
+    echo "whitelist $fj_whitelist" >> "$fjprofile"
+  fi
   if [ $fj_net_none ]; then
     echo "net lo" >> "$fjprofile"
   fi
@@ -195,10 +202,10 @@ echo '#!/bin/sh' > "$launcher"
 echo "export $garbage_collector
 export FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE" >> "$launcher"
 if [ $firejail ]; then
-  echo "mkdir ComfyUI/temp" >> "$launcher"
+  echo "mkdir \"$script_dir\"/ComfyUI/temp" >> "$launcher"
   printf "firejail --profile=$fjprofile " >> "$launcher"
 fi
-echo "$script_dir/bin/python ComfyUI/main.py \
+echo "\"$script_dir\"/bin/python ComfyUI/main.py \
 $lowvram \
 $dsm \
 --reserve-vram $reserve_vram \
@@ -224,5 +231,5 @@ if [ "$caffeinate" ]; then
 else
   "$launcher"
 fi
-uninitialize
+#uninitialize
 
