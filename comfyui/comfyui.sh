@@ -231,5 +231,5 @@ if [ "$caffeinate" ]; then
 else
   "$launcher"
 fi
-#uninitialize
+uninitialize
 
