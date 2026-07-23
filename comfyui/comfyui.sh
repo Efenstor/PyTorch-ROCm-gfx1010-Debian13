@@ -24,6 +24,8 @@ lowvram=
 dsm=
 custom=
 caffeinate=
+firejail=
+fj_net_none=
 
 get_current_profile() {
   echo $(cat "$1" | sed -n "s/ *\([0-9]*\).*\*.*/\1/p")
@@ -39,6 +41,7 @@ uninitialize() {
     echo $prev_profile > "$profile_path"
   fi
   rm -f "$launcher"
+  rm -f "$fjprofile"
 }
 
 catchbreak() {
@@ -47,11 +50,11 @@ catchbreak() {
 }
 
 # Change dir
-script_dir="$(dirname $0)"
+script_dir="$(realpath $(dirname $0))"
 cd "$script_dir"
 
 # Parse the named parameters
-optstr="?hildafgr:t:s:p:q:voc:"
+optstr="?hildafgr:t:s:p:q:voc:jn"
 while getopts $optstr opt
 do
   case "$opt" in
@@ -70,6 +73,8 @@ do
     v) cache_classic="--cache-classic" ;;
     o) switch_profile=1 ;;
     c) custom="$OPTARG" ;;
+    j) firejail=1 ;;
+    n) fj_net_none=1 ;;
     :) echo "Missing argument for -$OPTARG" >&2
        exit 1 ;;
   esac
@@ -102,6 +107,8 @@ if [ "$help" ]; then
   echo "-v: use classic (aggressive) caching"
   echo "-o: switch the amdgpu profile to COMPUTE, see NOTE 1 below (default=$profile_compute)"
   echo "-c: custom parameters to be added to the ComfyUI command line"
+  echo "-j: run ComfyUI in firejail"
+  echo "-n: restrict network when running in firejail"
   echo "
 NOTE 1: For this option to work the profile file must be user-writable.
   You can acheive this by making a startup script with the following command:
@@ -159,19 +166,45 @@ if [ "$switch_profile" ]; then
   fi
 fi
 
+# Create the firejail profile
+if [ $firejail ]; then
+  fjprofile=$(mktemp)
+  echo "
+    include /etc/firejail/default.profile    
+    whitelist $script_dir
+    read-write $script_dir/ComfyUI
+    tmpfs $script_dir/ComfyUI/temp
+    private-tmp
+    ignore private-dev
+  " > "$fjprofile"
+  if [ $fj_net_none ]; then
+    echo "net lo" >> "$fjprofile"
+  fi
+  echo "
+    nonewprivs
+    dbus-user none
+    dbus-system none
+    caps.drop all
+    caps.keep chown,setuid,setgid
+  " >> "$fjprofile"
+fi
+
 # Create the launcher file
 launcher=$(mktemp)
 echo '#!/bin/sh' > "$launcher"
 echo "export $garbage_collector
-export MIOPEN_FIND_MODE=2
-export FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE
-bin/python ComfyUI/main.py \
+export FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE" >> "$launcher"
+if [ $firejail ]; then
+  echo "mkdir ComfyUI/temp" >> "$launcher"
+  printf "firejail --profile=$fjprofile " >> "$launcher"
+fi
+echo "$script_dir/bin/python ComfyUI/main.py \
 $lowvram \
 $dsm \
---normalvram \
 --reserve-vram $reserve_vram \
 --preview-method $preview_method \
 --fast \
+--fp32-vae \
 $cache_classic \
 $attention \
 $custom \
@@ -180,7 +213,9 @@ chmod +x "$launcher"
 
 # excluded options
 #export TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL=1
-#--fp32-vae \
+#export MIOPEN_FIND_MODE=2
+#--normalvram \
+#--disable-triton-backend \
 
 # Execute
 trap "catchbreak" INT
