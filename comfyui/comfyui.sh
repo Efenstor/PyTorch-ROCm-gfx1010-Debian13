@@ -27,6 +27,8 @@ caffeinate=
 firejail=
 fj_net_none=
 fj_whitelist=
+tempdir_arg=
+tempdir=
 
 get_current_profile() {
   echo $(cat "$1" | sed -n "s/ *\([0-9]*\).*\*.*/\1/p")
@@ -43,7 +45,7 @@ uninitialize() {
   fi
   rm -f "$launcher"
   rm -f "$fjprofile"
-  rm -rf "$script_dir"/ComfyUI/temp
+  if [ -d "$tempdir" ]; then rm -rf "$tempdir"; fi
 }
 
 catchbreak() {
@@ -173,12 +175,14 @@ fi
 # Create the firejail profile
 if [ $firejail ]; then
   fjprofile=$(mktemp)
+  tempdir=$(mktemp -d)
+  tempdir_arg="--temp-directory \"$tempdir\""
   echo "
-    include /etc/firejail/default.profile    
+    include /etc/firejail/default.profile   
     whitelist $script_dir
+    whitelist /opt/rocm
     read-write $script_dir/ComfyUI
-    tmpfs $script_dir/ComfyUI/temp
-    private-tmp
+    tmpfs $tempdir
     ignore private-dev
   " > "$fjprofile"
   if [ "$fj_whitelist" ]; then
@@ -202,10 +206,10 @@ echo '#!/bin/sh' > "$launcher"
 echo "export $garbage_collector
 export FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE" >> "$launcher"
 if [ $firejail ]; then
-  echo "mkdir \"$script_dir\"/ComfyUI/temp" >> "$launcher"
   printf "firejail --profile=$fjprofile " >> "$launcher"
 fi
 echo "\"$script_dir\"/bin/python ComfyUI/main.py \
+$tempdir_arg \
 $lowvram \
 $dsm \
 --reserve-vram $reserve_vram \
