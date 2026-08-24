@@ -178,7 +178,9 @@ if [ $firejail ]; then
   tempdir=$(mktemp -d)
   tempdir_arg="--temp-directory \"$tempdir\""
   echo "
-    include /etc/firejail/default.profile   
+    include /etc/firejail/default.profile
+    blacklist ${HOME}/.ssh
+    blacklist ${HOME}/.gnupg
     whitelist $script_dir
     whitelist /opt/rocm
     read-write $script_dir/ComfyUI
@@ -196,7 +198,10 @@ if [ $firejail ]; then
     dbus-user none
     dbus-system none
     caps.drop all
-    caps.keep chown,setuid,setgid
+    noroot
+    seccomp
+    seccomp.drop @privileged
+    restrict-namespaces
   " >> "$fjprofile"
 fi
 
