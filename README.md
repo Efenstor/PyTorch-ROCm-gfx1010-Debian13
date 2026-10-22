@@ -6,10 +6,12 @@
 
 These instructions are for building Torch 2.10, TorchVision 0.25 and TorchAudio 2.10 for Python 3.13 and ROCm 7.2 in Debian 13 (trixie) specifically for the *gfx101x* (RDNA 1) arch (e.g. Radeon RX 5600/5700). RDNA 2 & 3 will probably work out of the box from the [official wheel](https://pytorch.org/get-started/locally).
 
-Note about kernel panics
+Note about ComfyUI and kernel panics
 --
 
-If you experience occasional kernel panics when using PyTorch (for example, in ComfyUI those may occur during switching nodes), first of all try to increase the **reserved VRAM limit**. For example, I had to increase it to the absurd value of 10 GB for the kernel panics to disappear, and amazingly enough it didn't affect performance at all.
+First of all, I recommend using my script to run ComfyUI, it is located in the *comfyui* directory. Currently it uses *Dynamic VRAM* as default, if you experience crashes use the `-y` argument to fall back to the default VRAM management method. Note that it is highly recommended to use [*GGUF (Dynamic VRAM)* loaders from molbal](https://github.com/molbal/ComfyUI-GGUF).
+
+If you experience occasional kernel panics when using PyTorch, first of all try to disable Dynamic VRAM and increase the **reserved VRAM limit**: for example, in the past I had to increase it to the absurd value of 10 GB for the kernel panics to disappear - not sure if that was necessary, because kernel panics were rather rare and pretty random.
 
 **IMPORTANT**: It seems that more recent kernels from the backports (6.17 and later) are causing occasional freezes with PyTorch no matter the reserved VRAM limit, so I highly recommend to stick to the stable 6.12 kernels.
 

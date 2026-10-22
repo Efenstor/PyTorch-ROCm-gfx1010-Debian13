@@ -8,7 +8,7 @@
 
 # The defaults should be almost crash-safe
 # (use anything for True or nothing for False)
-reserve_vram=12.0    # safe value = 12.0
+reserve_vram=       # old default = "--reserve-vram 2.0"
 gc_threshold=0.6    # default = 0.6
 max_split_size=256  # default = 256
 preview_method=auto
@@ -29,6 +29,7 @@ fj_net_none=
 fj_whitelist=
 tempdir_arg=
 tempdir=
+dynamic_vram="--enable-dynamic-vram"
 
 get_current_profile() {
   echo $(cat "$1" | sed -n "s/ *\([0-9]*\).*\*.*/\1/p")
@@ -58,7 +59,7 @@ script_dir="$(realpath $(dirname $0))"
 cd "$script_dir"
 
 # Parse the named parameters
-optstr="?hildafgr:t:s:p:q:voc:jnw:"
+optstr="?hildafgr:t:s:p:q:voc:jnw:y"
 while getopts $optstr opt
 do
   case "$opt" in
@@ -80,6 +81,7 @@ do
     j) firejail=1 ;;
     n) fj_net_none=1 ;;
     w) fj_whitelist="$OPTARG" ;;
+    y) dynamic_vram= ;;
     :) echo "Missing argument for -$OPTARG" >&2
        exit 1 ;;
   esac
@@ -94,6 +96,7 @@ if [ "$help" ]; then
   echo "Arguments:"
   echo "-h or -?: show this help"
   echo "-i: interactive mode"
+  echo "-y: don't use Dynamic VRAM (old default)"
   echo "-l: use --lowvram (makes everything very slow but fights OOM errors)"
   echo "-d: disable smart memory (same as -l but different strategy)"
   echo "-a: don't auto-launch browser"
@@ -217,10 +220,11 @@ echo "\"$script_dir\"/bin/python ComfyUI/main.py \
 $tempdir_arg \
 $lowvram \
 $dsm \
---reserve-vram $reserve_vram \
+$reserve_vram \
 --preview-method $preview_method \
 --fast \
 --fp32-vae \
+$dynamic_vram \
 $cache_classic \
 $attention \
 $custom \
