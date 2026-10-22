@@ -8,12 +8,12 @@
 
 # The defaults should be almost crash-safe
 # (use anything for True or nothing for False)
-reserve_vram=       # old default = "--reserve-vram 2.0"
+reserve_vram=2.0    # default = 2.0
 gc_threshold=0.6    # default = 0.6
 max_split_size=256  # default = 256
 preview_method=auto
 auto_launch=1
-garbage_collector=1
+garbage_collector=
 attention=0
 profile_path="/sys/class/drm/card0/device/pp_power_profile_mode"
 profile_compute=5  # cat /sys/class/drm/card0/device/pp_power_profile_mode
@@ -69,7 +69,7 @@ do
     d) dsm="--disable-smart-memory" ;;
     a) auto_launch= ;;
     f) caffeinate=1 ;;
-    g) garbage_collector= ;;
+    g) garbage_collector=1 ;;
     r) reserve_vram="$OPTARG" ;;
     t) gc_threshold="$OPTARG" ;;
     s) max_split_size="$OPTARG" ;;
@@ -101,8 +101,8 @@ if [ "$help" ]; then
   echo "-d: disable smart memory (same as -l but different strategy)"
   echo "-a: don't auto-launch browser"
   echo "-f: prevent sleep (requires the caffeine tool)"
-  echo "-g: don't use garbage collector"
   echo "-r: reserve_vram size (GB, default=$reserve_vram)"
+  echo "-g: use garbage collector"
   echo "-t: garbage collector threshold (0..1 VRAM, default=$gc_threshold)"
   echo "-s: garbage collector max_split_size size (MB, default=$max_split_size)"
   echo "-p: preview method (default=$preview_method)"
@@ -211,8 +211,11 @@ fi
 # Create the launcher file
 launcher=$(mktemp)
 echo '#!/bin/sh' > "$launcher"
-echo "export $garbage_collector
-export FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE" >> "$launcher"
+if [ $garbage_collector ]; then
+  echo "export $garbage_collector" >> "$launcher"
+fi
+echo "export FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE" >> "$launcher"
+echo "export MIOPEN_FIND_MODE=2" >> "$launcher"
 if [ $firejail ]; then
   printf "firejail --profile=$fjprofile " >> "$launcher"
 fi
@@ -220,7 +223,7 @@ echo "\"$script_dir\"/bin/python ComfyUI/main.py \
 $tempdir_arg \
 $lowvram \
 $dsm \
-$reserve_vram \
+--reserve-vram $reserve_vram \
 --preview-method $preview_method \
 --fast \
 --fp32-vae \
@@ -233,7 +236,6 @@ chmod +x "$launcher"
 
 # excluded options
 #export TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL=1
-#export MIOPEN_FIND_MODE=2
 #--normalvram \
 #--disable-triton-backend \
 
