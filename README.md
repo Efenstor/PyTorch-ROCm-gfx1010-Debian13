@@ -9,17 +9,17 @@ These instructions are for building Torch 2.10, TorchVision 0.25 and TorchAudio 
 Note about ComfyUI and kernel panics
 --
 
-First of all, I recommend using my script to run ComfyUI, it is located in the *comfyui* directory. Currently it uses *Dynamic VRAM* as default, if you experience crashes use the `-y` argument to fall back to the default VRAM management method. Note that it is highly recommended to use [*GGUF (Dynamic VRAM)* loaders from molbal](https://github.com/molbal/ComfyUI-GGUF).
+First of all, I recommend using my script to run ComfyUI, it is located in the *comfyui* directory. It seems that the new *Dynamic VRAM* mode is unstable with *gfx1010*, to use it anyway use the `-y` argument.
 
 If you are using *GNOME* I highly recommended to disable the hardware cursors, otherwise you'll have slowdowns after each tiny cursor movement. Create a *.conf* file in *~/.config/environment.d* (e.g. *~/.config/environment.d/disable_hw_cursors.conf*) and add the `MUTTER_DEBUG_DISABLE_HW_CURSORS=1` line into it, then reboot.
 
-If you experience occasional kernel panics when using PyTorch, first of all try to disable Dynamic VRAM and increase the **reserved VRAM limit**: for example, in the past I had to increase it to the absurd value of 10 GB for the kernel panics to disappear - not sure if that was necessary, because kernel panics were rather rare and pretty random.
+If you experience occasional kernel panics when using PyTorch, first of all try to increase the **reserved VRAM limit**: for example, in the past I had to increase it to the absurd value of 10 GB for the kernel panics to disappear - not sure if that was necessary, because kernel panics were rather rare and pretty random.
 
 **IMPORTANT**: It seems that more recent kernels from the backports (6.17 and later) are causing occasional freezes with PyTorch no matter the reserved VRAM limit, so I highly recommend to stick to the stable 6.12 kernels.
 
 Also try adding the following parameters to the kernel mode line:
 
-    amd_iommu=off amdgpu.cwsr_enable=0 amdgpu.gttsize=8192 ttm.pages_limit=32768000 ttm.page_pool_size=32768000 amdttm.pages_limit=32768000 amdttm.page_pool_size=32768000
+    amdgpu.cwsr_enable=0 amdgpu.gpu_recovery=1
     
 Add it to the *GRUB_CMDLINE_LINUX_DEFAULT* line in `/etc/default/grub`, execute update-grub and reboot.
 

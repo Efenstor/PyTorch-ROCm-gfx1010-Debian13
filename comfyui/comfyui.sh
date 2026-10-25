@@ -8,7 +8,9 @@
 
 # The defaults should be almost crash-safe
 # (use anything for True or nothing for False)
-reserve_vram=2.0    # default = 2.0
+dynamic_vram=
+reserve_vram=1.0    # default = 1.0
+vram_headroom=0.5   # default = 0.5
 gc_threshold=0.6    # default = 0.6
 max_split_size=256  # default = 256
 preview_method=auto
@@ -29,7 +31,9 @@ fj_net_none=
 fj_whitelist=
 tempdir_arg=
 tempdir=
-dynamic_vram="--enable-dynamic-vram"
+fast_disk=
+high_ram=
+offline=
 
 get_current_profile() {
   echo $(cat "$1" | sed -n "s/ *\([0-9]*\).*\*.*/\1/p")
@@ -59,29 +63,31 @@ script_dir="$(realpath $(dirname $0))"
 cd "$script_dir"
 
 # Parse the named parameters
-optstr="?hildafgr:t:s:p:q:voc:jnw:y"
+optstr="?hac:dfgijklmnop:q:r:s:t:vw:y"
 while getopts $optstr opt
 do
   case "$opt" in
     h|\?) help=1 ;;
-    i) interactive=1 ;;
-    l) lowvram="--lowvram" ;;
-    d) dsm="--disable-smart-memory" ;;
     a) auto_launch= ;;
+    c) custom="$OPTARG" ;;
+    d) dsm="--disable-smart-memory" ;;
     f) caffeinate=1 ;;
     g) garbage_collector=1 ;;
-    r) reserve_vram="$OPTARG" ;;
-    t) gc_threshold="$OPTARG" ;;
-    s) max_split_size="$OPTARG" ;;
+    i) interactive=1 ;;
+    j) firejail=1 ;;
+    k) fast_disk="--fast-disk" ;;
+    l) lowvram="--lowvram" ;;
+    m) high_ram="--high-ram" ;;
+    n) fj_net_none=1 ;;
+    o) switch_profile=1 ;;
     p) preview_method="$OPTARG" ;;
     q) attention="$OPTARG" ;;
+    r) reserve_vram="$OPTARG" ;;
+    s) max_split_size="$OPTARG" ;;
+    t) gc_threshold="$OPTARG" ;;
     v) cache_classic="--cache-classic" ;;
-    o) switch_profile=1 ;;
-    c) custom="$OPTARG" ;;
-    j) firejail=1 ;;
-    n) fj_net_none=1 ;;
     w) fj_whitelist="$OPTARG" ;;
-    y) dynamic_vram= ;;
+    y) dynamic_vram=1 ;;
     :) echo "Missing argument for -$OPTARG" >&2
        exit 1 ;;
   esac
@@ -95,16 +101,18 @@ if [ "$help" ]; then
   echo
   echo "Arguments:"
   echo "-h or -?: show this help"
-  echo "-i: interactive mode"
-  echo "-y: don't use Dynamic VRAM (old default)"
-  echo "-l: use --lowvram (makes everything very slow but fights OOM errors)"
-  echo "-d: disable smart memory (same as -l but different strategy)"
   echo "-a: don't auto-launch browser"
+  echo "-c: custom parameters to be added to the ComfyUI command line"
+  echo "-d: disable smart memory (same as -l but different strategy)"
   echo "-f: prevent sleep (requires the caffeine tool)"
-  echo "-r: reserve_vram size (GB, default=$reserve_vram)"
   echo "-g: use garbage collector"
-  echo "-t: garbage collector threshold (0..1 VRAM, default=$gc_threshold)"
-  echo "-s: garbage collector max_split_size size (MB, default=$max_split_size)"
+  echo "-i: interactive mode"
+  echo "-j: run ComfyUI in firejail"
+  echo "-k: use --fast-disk (recommended for NVMEs)"
+  echo "-l: use --lowvram (makes everything very slow but fights OOM errors)"
+  echo "-m: use --high-ram (recommended for >=32 GB of RAM)"
+  echo "-n: restrict network in firejail (also adds --offline)"
+  echo "-o: switch the amdgpu profile to COMPUTE, see NOTE 1 below (default=$profile_compute)"
   echo "-p: preview method (default=$preview_method)"
   echo "-q: specify attention method:"
   echo "    0 = split-cross-attention (default)"
@@ -112,12 +120,13 @@ if [ "$help" ]; then
   echo "    2 = sage-attention"
   echo "    3 = pytorch-cross-attention"
   echo "    4 = flash-attention"
+  echo "    5 = ck-attention"
+  echo "-r: reserve_vram size (GB, default=$reserve_vram)"
+  echo "-s: garbage collector max_split_size size (MB, default=$max_split_size)"
+  echo "-t: garbage collector threshold (0..1 VRAM, default=$gc_threshold)"
   echo "-v: use classic (aggressive) caching"
-  echo "-o: switch the amdgpu profile to COMPUTE, see NOTE 1 below (default=$profile_compute)"
-  echo "-c: custom parameters to be added to the ComfyUI command line"
-  echo "-j: run ComfyUI in firejail"
-  echo "-n: restrict network in firejail"
   echo "-w: whitelist a directory in firejail"
+  echo "-y: use Dynamic VRAM"
   echo "
 NOTE 1: For this option to work the profile file must be user-writable.
   You can acheive this by making a startup script with the following command:
@@ -136,6 +145,15 @@ fi
 if [ "$auto_launch" ]; then
   auto_launch="--auto-launch"
 fi
+if [ "$dynamic_vram" ]; then
+  dynamic_vram="--enable-dynamic-vram"
+fi
+if [ "$reserve_vram" ]; then
+  reserve_vram="--reserve-vram $reserve_vram"
+fi
+if [ "$vram_headroom" ]; then
+  vram_headroom="--vram-headroom $vram_headroom"
+fi
 
 # Replace attention number with the actual parameter
 case "$attention" in
@@ -144,6 +162,7 @@ case "$attention" in
   2) attention="--use-sage-attention" ;;
   3) attention="--use-pytorch-cross-attention" ;;
   4) attention="--use-flash-attention" ;;
+  5) attention="--use-ck-attention" ;;
 esac
 
 # Interactive questions
@@ -195,6 +214,7 @@ if [ $firejail ]; then
   fi
   if [ $fj_net_none ]; then
     echo "net lo" >> "$fjprofile"
+    offline="--offline"
   fi
   echo "
     nonewprivs
@@ -223,14 +243,17 @@ echo "\"$script_dir\"/bin/python ComfyUI/main.py \
 $tempdir_arg \
 $lowvram \
 $dsm \
---reserve-vram $reserve_vram \
+$reserve_vram \
+$vram_headroom \
 --preview-method $preview_method \
 --fast \
---fp32-vae \
 $dynamic_vram \
 $cache_classic \
 $attention \
+$fast_disk \
+$high_ram \
 $custom \
+$offline \
 $auto_launch" >> "$launcher"
 chmod +x "$launcher"
 
@@ -238,6 +261,8 @@ chmod +x "$launcher"
 #export TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL=1
 #--normalvram \
 #--disable-triton-backend \
+#--fp32-vae \
+#--disable-nvml-pressure \
 
 # Execute
 trap "catchbreak" INT
