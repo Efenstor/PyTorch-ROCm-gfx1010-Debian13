@@ -9,7 +9,7 @@
 # The defaults should be almost crash-safe
 # (use anything for True or nothing for False)
 dynamic_vram=
-reserve_vram=1.0    # default = 1.0
+reserve_vram=12.0    # default = 1.0
 vram_headroom=0.5   # default = 0.5
 gc_threshold=0.6    # default = 0.6
 max_split_size=256  # default = 256
